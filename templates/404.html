@@ -1,0 +1,40 @@
+<html>
+    <head>
+        <title>404 - Page Not Found</title>
+    </head>
+    <body>
+        <h1>404 - Something went wrong</h1>
+
+        <hr>
+
+        <h2>How to Use This App</h2>
+
+        <h3>Top Species</h3>
+        <p>Find the most observed species near a location in Minnesota.</p>
+        <code>/top_species/&lt;location&gt;/&lt;radius&gt;/&lt;top_n&gt;</code>
+        <ul>
+            <li><b>location</b>: City name, e.g. <code>Northfield</code></li>
+            <li><b>radius</b>: Search radius in miles, e.g. <code>10</code></li>
+            <li><b>top_n</b>: Number of top species to show per taxon, e.g. <code>3</code></li>
+        </ul>
+        <p>Example: <a href="/top_species/Northfield/10/3">/top_species/Northfield/10/3</a></p>
+
+        <h3>Leaderboard</h3>
+        <p>See the top 100 contributors for a given animal in Minnesota.</p>
+        <code>/leaderboard/&lt;animal&gt;</code>
+        <ul>
+            <li><b>animal</b>: Common name of the animal, e.g. <code>Common Loon</code></li>
+        </ul>
+        <p>Example: <a href="/leaderboard/Common Loon">/leaderboard/Common Loon</a></p>
+
+        <h3> Game</h3>
+        <p>Guess the most commonly observed animal in a randomly selected Minnesota location.</p>
+        <code>/game</code>
+        <ul>
+            <li>No parameters needed — just visit the route to start playing</li>
+            <li>You'll be shown a location and four animal options to choose from</li>
+            <li>Submit your guess to find out if you're correct</li>
+        </ul>
+        <p>Example: <a href="/game">/game</a></p>
+    </body>
+</html>

@@ -1,0 +1,25 @@
+<html>
+  <head>
+    <title>Mammal Guessing Game</title>
+  </head>
+  <body>
+    <h1>Species Quiz</h1>
+
+    <p>Which is the most commonly reported species in {{location}}?</p>
+
+    <!-- Lists the animal options as buttons that users can select as their answer -->
+    <form method="POST">
+      {% for animal in options %}
+      <input type="radio" name="guess" value="{{ animal }}" required /> {{
+      animal }}<br />
+      {% endfor %}
+      <br />
+      <button type="submit">Submit Guess</button>
+    </form>
+    {% if message %}
+    <div>
+      <strong>{{ message }}</strong>
+    </div>
+    {% endif %}
+  </body>
+</html>

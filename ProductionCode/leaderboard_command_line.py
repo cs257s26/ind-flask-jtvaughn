@@ -165,10 +165,10 @@ def check_for_improper_request(creature_of_interest, data):
     Returns:
         True or False (bool): This is based on if the creature of interest is "common name", if it is then the function returns False. Also when False, it will prompt the user to try again with a different animal.
     """
-    if creature_of_interest not in [row[7] for row in data]:
-        return False
-    else:
+    if creature_of_interest in [row[7] for row in data]:
         return True
+    else:
+        return False
     
 
 def main():

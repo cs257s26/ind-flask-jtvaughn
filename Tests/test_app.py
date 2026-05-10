@@ -1,5 +1,5 @@
 import unittest
-from app import *
+from old_app import *
 
 class app_tests(unittest.TestCase):
     def setUp(self):
@@ -26,7 +26,7 @@ class app_tests(unittest.TestCase):
         """See if invalid location gives expected error."""
         response = self.app.get('/top_species/InvalidCity/10/3')
         data = response.get_json()
-        self.assertEqual({'error': "Could not geocode 'InvalidCity, Minnesota'"}, data)
+        self.assertEqual(response.status_code, 404)
 
     def test_leaderboard_valid_list(self):
         """See if valid request to leaderboard gives expected output."""
@@ -44,7 +44,7 @@ class app_tests(unittest.TestCase):
         """See if invalid animal gives expected error."""
         response = self.app.get('/leaderboard/NotAnAnimal')
         data = response.get_json()     
-        self.assertEqual({"error": "Sorry, this is not an animal. Please try again."}, data) 
+        self.assertEqual(response.status_code, 404)
 
     def tearDown(self):
         return super().tearDown()

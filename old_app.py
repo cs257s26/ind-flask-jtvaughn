@@ -1,8 +1,9 @@
 from flask import Flask
 from flask import render_template
 from flask import request
-from flask import Flask, redirect, url_for, request, render_template, session
-from ProductionCode.game_command_line_refactored import *
+from flask import Flask, redirect, url_for, request
+from flask import jsonify
+from urllib.parse import unquote
 
 from ProductionCode.top_species_command_line import forward_geocode, filter_by_radius, top_species_by_taxon
 from ProductionCode.top_species_command_line import load_data as load_species_data
@@ -10,11 +11,6 @@ from ProductionCode.leaderboard_command_line import load_data as load_leaderboar
 from ProductionCode.leaderboard_command_line import create_leaderboard, check_for_improper_request, print_leaders
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here'
-
-@app.route('/')
-def index():
-    return render_template('404.html')
 
 @app.route('/top_species/<location>/<radius>/<top_n>')
 def top_species(location, radius=10, top_n=3):
@@ -37,12 +33,12 @@ def top_species(location, radius=10, top_n=3):
 
     coords= forward_geocode(location)
     if coords is None:
-        return render_template('404.html', location=f"Could not geocode '{location}'"), 404
+        return render_template('404.html', location=location), 404
     lat, lon = coords
 
     observations = filter_by_radius(data, lat, lon, radius)
     if len(observations) == 0:
-        return render_template('404.html', location=f"No observations found near '{location}'. Make sure your location is in Minnesota."), 404
+        return render_template('404.html', location=location), 404
     result = top_species_by_taxon(observations, top_n)
 
     return render_template('top_species.html', top_species=result, location=location)
@@ -58,41 +54,15 @@ def leaderboard(animal):
         JSON list of top contributors with their contribution counts, or an error message if the animal is not found."""
     data = load_leaderboard_data()
     animal = request.args.get('animal', default=animal, type=str)
-    if not check_for_improper_request(animal, data):
-        return render_template('404.html'), 404
-    username_counts, username_key_storage, unused, unused2 = create_leaderboard(animal, data)
-    return render_template('leaderboard.html', animal_name=animal, username_key_storage=username_key_storage, username_counts=username_counts, max_display=100)    
+    check_result = check_for_improper_request(animal, data)
     
-@app.route('/game', methods=['GET', 'POST'])
-def game_play():
-    result_message = None
+    if not check_result:
+        return jsonify({"error": "Sorry, this is not an animal. Please try again."}), 404
     
-    #submit a guess
-    if request.method == 'POST':
-        user_guess = request.form.get('guess')
-        correct_answer = session.get('correct_answer')
-        correct_answer_count = session.get('correct_answer_count')
+    leaderboard = create_leaderboard(animal,data)
+    result= print_leaders(*leaderboard)  
 
-        if user_guess == correct_answer:
-            result_message = f"Correct! {user_guess} is the most common."
-        else:
-            result_message = f"Incorrect, the most commonly reported animal is:  {correct_answer} reported  {correct_answer_count} times."
-            
-    #generate a new question
-    data = load_data()
-    current_game = game(data)
-    session['correct_answer'] = current_game['correctAnimal']
-    session['correct_answer_count'] = current_game['correctCount']
-    
-    return render_template('game.html', 
-                           location=current_game['location'], 
-                           options=current_game['options'],
-                           message=result_message)
-
-
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html'), 404
+    return jsonify(result)
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,0 +1,17 @@
+<html>
+    <head>
+        <title>Top Species</title>
+    </head>
+        <h1>Top Species in {{ location }}</h1>
+    <body>
+        
+        {% for taxon, species_list in top_species.items() %}
+        <h2>{{ taxon }}</h2>
+        <ul>
+            {% for taxon_name, common_name, count in species_list %}
+            <li>{{ common_name }} ({{ taxon_name }}) - {{ count }}</li>
+            {% endfor %}
+        </ul>
+        {% endfor %}
+    </body>
+</html>
