@@ -1,11 +1,11 @@
 # README
 
 ## urls
-To see `top_n` species within `radius` of a city: 
-http://127.0.0.1:5000/top_species?location=<city>&radius=<miles>&top_n=<n>
+To see `top_n` species within `radius` miles of a city:
+http://127.0.0.1:5000/top_species?location=Northfield,Minnesota&radius=10&top_n=3
 
-To see a leaderboard for `animal`:
-http://127.0.0.1:5000/leaderboard?animal=<animal>
+To see a leaderboard for an animal:
+http://127.0.0.1:5000/leaderboard?animal=American Toad
 
 ## write up
 
