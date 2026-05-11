@@ -1,17 +1,21 @@
+<!DOCTYPE html>
 <html>
-    <head>
-        <title>Top Species</title>
-    </head>
-        <h1>Top Species in {{ location }}</h1>
-    <body>
-        
-        {% for taxon, species_list in top_species.items() %}
-        <h2>{{ taxon }}</h2>
-        <ul>
-            {% for taxon_name, common_name, count in species_list %}
-            <li>{{ common_name }} ({{ taxon_name }}) - {{ count }}</li>
-            {% endfor %}
-        </ul>
-        {% endfor %}
-    </body>
+<head>
+    <title>Top Species near {{ location }}</title>
+</head>
+<body>
+    <h1>Top Species within {{ radius }} miles of {{ location }}</h1>
+
+    {% set ns = namespace(current_taxon='') %}
+    {% for iconic_taxon, taxon_name, common_name, count in results %}
+        {% if iconic_taxon != ns.current_taxon %}
+            {% if not loop.first %}</ul>{% endif %}
+            <h2>{{ iconic_taxon }}</h2>
+            <ul>
+            {% set ns.current_taxon = iconic_taxon %}
+        {% endif %}
+        <li>{{ common_name }} ({{ taxon_name }}) — {{ count }} observations</li>
+        {% if loop.last %}</ul>{% endif %}
+    {% endfor %}
+</body>
 </html>

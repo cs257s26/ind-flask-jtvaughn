@@ -1,98 +1,37 @@
-from flask import Flask
-from flask import render_template
-from flask import request
-from flask import Flask, redirect, url_for, request, render_template, session
-from ProductionCode.game_command_line_refactored import *
-
-from ProductionCode.top_species_command_line import forward_geocode, filter_by_radius, top_species_by_taxon
-from ProductionCode.top_species_command_line import load_data as load_species_data
-from ProductionCode.leaderboard_command_line import load_data as load_leaderboard_data
-from ProductionCode.leaderboard_command_line import create_leaderboard, check_for_improper_request, print_leaders
+import datasource
+from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here'
+app.secret_key = '123456789'
+
+ds = datasource.DataSource()
 
 @app.route('/')
 def index():
     return render_template('404.html')
 
-@app.route('/top_species/<location>/<radius>/<top_n>')
-def top_species(location, radius=10, top_n=3):
-    """Finds most observed species near a location in Minnesota.
-    
-    Args:
-        location: City name to search near, e.g. 'Northfield, Minnesota'
-        radius: Search radius in miles (default: 10)
-        top_n: Number of top species per taxon (default: 3)
-        
-    Returns:
-        JSON dict mapping iconic_taxon string to list of (taxon_name, common_name, count) tuples sorted by count descending, or an error message if the location is invalid or no observations are found."""
-    data=load_species_data()
+@app.route('/top_species')
+def top_species():
+    """Finds most observed species near a location in Minnesota."""
+    location = request.args.get('location', 'Northfield, Minnesota')
+    radius   = float(request.args.get('radius', 10))
+    top_n    = int(request.args.get('top_n', 3))
 
-    location = request.args.get('location', default=location, type=str)
-    if "minnesota" not in location.lower():
-        location = f"{location}, Minnesota"
-    radius = request.args.get('radius', default=10, type=int)
-    top_n = request.args.get('top_n', default=3, type=int)  
+    city_name, results = ds.getTopSpeciesByCity(location, radius, top_n)
+    if results is None:
+        return render_template('404.html', error=f"Could not geocode '{location}'."), 404
+    if len(results) == 0:
+        return render_template('404.html', error=f"No observations found near '{location}'."), 404
+    return render_template('top_species.html', location=city_name, radius=radius, top_n=top_n, results=results)
 
-    coords= forward_geocode(location)
-    if coords is None:
-        return render_template('404.html', location=f"Could not geocode '{location}'"), 404
-    lat, lon = coords
-
-    observations = filter_by_radius(data, lat, lon, radius)
-    if len(observations) == 0:
-        return render_template('404.html', location=f"No observations found near '{location}'. Make sure your location is in Minnesota."), 404
-    result = top_species_by_taxon(observations, top_n)
-
-    return render_template('top_species.html', top_species=result, location=location)
-
-@app.route('/leaderboard/<animal>')
-def leaderboard(animal):
-    """Displays the top 100 species-specific contributors to INaturalist in Minnesota for a given animal.
-    
-    Args:
-        animal: Common name of the animal to search for, e.g. 'Common Loon'
-    
-    Returns:
-        JSON list of top contributors with their contribution counts, or an error message if the animal is not found."""
-    data = load_leaderboard_data()
-    animal = request.args.get('animal', default=animal, type=str)
-    if not check_for_improper_request(animal, data):
-        return render_template('404.html'), 404
-    username_counts, username_key_storage, unused, unused2 = create_leaderboard(animal, data)
-    return render_template('leaderboard.html', animal_name=animal, username_key_storage=username_key_storage, username_counts=username_counts, max_display=100)    
-    
-@app.route('/game', methods=['GET', 'POST'])
-def game_play():
-    result_message = None
-    
-    #submit a guess
-    if request.method == 'POST':
-        user_guess = request.form.get('guess')
-        correct_answer = session.get('correct_answer')
-        correct_answer_count = session.get('correct_answer_count')
-
-        if user_guess == correct_answer:
-            result_message = f"Correct! {user_guess} is the most common."
-        else:
-            result_message = f"Incorrect, the most commonly reported animal is:  {correct_answer} reported  {correct_answer_count} times."
-            
-    #generate a new question
-    data = load_data()
-    current_game = game(data)
-    session['correct_answer'] = current_game['correctAnimal']
-    session['correct_answer_count'] = current_game['correctCount']
-    
-    return render_template('game.html', 
-                           location=current_game['location'], 
-                           options=current_game['options'],
-                           message=result_message)
-
-
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html'), 404
+@app.route('/leaderboard')
+def leaderboard():
+    """Displays the top 100 contributors for a given animal."""
+    animal  = request.args.get('animal', 'American Toad')
+    results = ds.getLeaderboard(animal)
+    if len(results) == 0:
+        return render_template('404.html', error=f"No observations found for '{animal}'."), 404
+    return render_template('leaderboard.html', animal=animal, leaderboard=results)
 
 if __name__ == '__main__':
     app.run(debug=True)
